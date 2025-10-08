@@ -1,0 +1,331 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина - ТМК</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            color: #000000;
+            line-height: 1.4;
+            padding: 16px;
+        }
+
+        .tmk-header {
+            text-align: center;
+            padding: 10px 0;
+            background: linear-gradient(135deg, #ff6600, #ff8c00);
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #000000;
+            text-align: center;
+            border-bottom: 2px solid #ff6600;
+            padding-bottom: 10px;
+        }
+
+        .cart-item {
+            background: #ffffff;
+            border: 2px solid #ff6600;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(255, 102, 0, 0.1);
+        }
+
+        .cart-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .cart-item-name {
+            font-size: 16px;
+            font-weight: 700;
+            flex: 1;
+            color: #000000;
+        }
+
+        .cart-item-quantity {
+            font-size: 14px;
+            color: #333333;
+            margin-bottom: 12px;
+            background: #fff5e6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #ff6600;
+        }
+
+        .cart-item-price {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ff6600;
+            margin-bottom: 12px;
+        }
+
+        .cart-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .cart-total {
+            background: #ffffff;
+            border: 2px solid #ff6600;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(255, 102, 0, 0.1);
+        }
+
+        .total-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff6600;
+            margin: 10px 0;
+        }
+
+        .button {
+            background: #ff6600;
+            color: #ffffff;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            border: 2px solid #ff6600;
+        }
+
+            .button:hover {
+                background: #e55a00;
+                border-color: #e55a00;
+                transform: translateY(-1px);
+            }
+
+        .button-secondary {
+            background: #ffffff;
+            color: #ff6600;
+            border: 2px solid #ff6600;
+        }
+
+            .button-secondary:hover {
+                background: #fff5e6;
+            }
+
+        .back-button {
+            background: #ffffff;
+            color: #ff6600;
+            border: 2px solid #ff6600;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #ff3333;
+            background: #ffe6e6;
+            border: 1px solid #ff3333;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            background: #f8f9fa;
+            border: 2px dashed #ff6600;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .discount-badge {
+            background: #27ae60;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* ✅ ДОБАВЛЕНО: Стили для модального окна заказа */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 600;
+                color: #333;
+            }
+
+            .form-group input,
+            .form-group textarea {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+
+                .form-group input:focus,
+                .form-group textarea:focus {
+                    border-color: #ff6600;
+                    outline: none;
+                }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tmk-header">ТМК - Трубная Металлургическая Компания</div>
+    <a href="index.html" class="back-button">← Назад к каталогу</a>
+    <h1 class="page-title">🛒 Ваша корзина</h1>
+
+    <div id="cart-container">
+        <div class="loading">🔄 Загрузка корзины...</div>
+    </div>
+
+    <!-- ✅ ДОБАВЛЕНО: Модальное окно оформления заказа -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeOrderForm()">&times;</span>
+            <h3>📦 Оформление заказа</h3>
+
+            <form id="orderForm" onsubmit="submitOrderForm(event)">
+                <div class="form-group">
+                    <label>ФИО *</label>
+                    <input type="text" id="fullName" required placeholder="Иванов Иван Иванович">
+                </div>
+
+                <div class="form-group">
+                    <label>ИНН компании *</label>
+                    <input type="text" id="inn" required placeholder="1234567890" maxlength="12">
+                </div>
+
+                <div class="form-group">
+                    <label>Телефон *</label>
+                    <input type="tel" id="phone" required placeholder="+7 (999) 123-45-67">
+                </div>
+
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="email" required placeholder="ivanov@company.ru">
+                </div>
+
+                <div class="form-group">
+                    <label>Комментарий к заказу</label>
+                    <textarea id="comment" placeholder="Дополнительные пожелания или условия доставки..." rows="3"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="button button-secondary" onclick="closeOrderForm()">Отмена</button>
+                    <button type="submit" class="button">✅ Подтвердить заказ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ✅ ИЗМЕНЕНО: Подключаем внешний JS файл -->
+    <script src="js/cart.js"></script>
+
+    <!-- ✅ ДОБАВЛЕНО: Telegram Web App интеграция -->
+    <script>
+        // Инициализация Telegram Web App
+        if (window.Telegram && Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+
+            // Кнопка "Назад" ведет на главную
+            Telegram.WebApp.BackButton.show();
+            Telegram.WebApp.BackButton.onClick(() => {
+                window.location.href = 'index.html';
+            });
+
+            // Главная кнопка "Закрыть"
+            Telegram.WebApp.MainButton.setText('Закрыть магазин');
+            Telegram.WebApp.MainButton.onClick(() => {
+                Telegram.WebApp.close();
+            });
+            Telegram.WebApp.MainButton.show();
+
+            // Автозаполнение данных пользователя Telegram
+            const user = Telegram.WebApp.initDataUnsafe?.user;
+            if (user) {
+                console.log('👤 Пользователь Telegram:', user);
+                // Можно использовать для автозаполнения формы
+            }
+        }
+    </script>
+</body>
+</html> 
